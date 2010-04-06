@@ -1,0 +1,19 @@
+# ImageMultiselect 1.0 Plugin
+
+This plugin provides your a component to select images in you website. You will
+have two sets of images (left and right). In the left side you will find all 
+available images (pagination is working). In the right panel you will see 
+selected images. User can choose an image by clicking it and add/remove it
+by double click. Additionally, there are 4 well known buttons: add one item, add
+all items, remove one item, remove all items. Developer can customize the view
+through css.
+
+The plugin is based on the MeioUpload Behavior. You should consider its README
+and installation notes. http://github.com/jrbasso/MeioUpload
+
+## Installation
+- Download an archive from github and extract it in `plugins/image_select`. Note 
+that if you install it in another directory, then you need to change the code
+in file '<plugin_dir>/views/image_selects/preview.ctp'. Search for the 
+'image_select' string.
+

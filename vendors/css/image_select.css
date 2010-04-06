@@ -1,0 +1,55 @@
+div.imgselect_float 
+{
+  float: left;
+  border: 0px solid red;
+  width: auto;
+  margin-left: 5px;
+  margin-right: 1em;
+  margin-top: 5px;
+  padding: 10px 10px;
+}
+
+div.imgselect_fload_selected
+{
+  float: left;
+  border: 0px solid red;
+  width: auto;
+  margin-left: 5px;
+  margin-right: 1em;
+  margin-top: 5px;
+  padding: 10px 10px;
+  background-color: #0042f2;
+}
+  
+div.imgselect_float p 
+{
+    text-align: left;
+    padding-left: 45%;
+}
+
+div.imgselect_container 
+{
+  border: 1px solid #333;
+  background-color: #ffe;
+  width: 30%;
+  display: inline-block;
+  overflow: scroll;
+  height: 250px;
+  max-height: 250px;
+}
+div.imgselect_buttons
+{
+  border: 1px solid #333;
+  display: inline-block;
+  width: 8%;
+}
+.imgselect_button
+{
+    font-size: 100%;
+}
+
+div.imgselect_spacer 
+{
+    clear: both;
+}  
+  
