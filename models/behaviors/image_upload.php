@@ -21,7 +21,7 @@ class ImageUploadBehavior extends MeioUploadBehavior {
  */
     var $image_default_options = array(
         'generateName' => true, // Wether to generate random file name or use original uploaded name
-        'maxFiles' => 1, // maximum number of files in a directory. If 0 then nothing happens, if > 0
+        'maxFiles' => 500, // maximum number of files in a directory. If 0 then nothing happens, if > 0
                          // then we start to create directories /$options['dir']/<i>, with maxFiles in every
                          // directory <i>
 		'fields' => array(

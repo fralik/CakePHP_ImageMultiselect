@@ -8,11 +8,15 @@ div.imgselect_float
   margin-top: 5px;
   padding: 10px 10px;
 }
+div.imgselect_float img
+{
+    /*padding-left: 45%;*/
+}
 
 div.imgselect_fload_selected
 {
   float: left;
-  border: 0px solid red;
+  border: 0px solid #a3c7ee;
   width: auto;
   margin-left: 5px;
   margin-right: 1em;

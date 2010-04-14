@@ -23,12 +23,14 @@ function toggle_img(div)
         div.style.backgroundColor = '';
         div.childNodes[4].childNodes[0].checked = false;
         div.setAttribute('selected', '');
+        //div.setAttribute('class', 'imgselect_float');
     }
     else
     {
-        div.style.backgroundColor = 'red';
+        div.style.backgroundColor = '#3961af';
         div.childNodes[4].childNodes[0].checked = true;
         div.setAttribute('selected', 'selected');
+        //div.setAttribute('class', 'imgselect_float_selected');
     }
 }
 
