@@ -71,6 +71,9 @@ returns all images from the right side.
 --------------------------------------------------------------------------------
   Installation
 --------------------------------------------------------------------------------
+0. Download and install MeioUpload. Be sure that you can use AJAX and jQuery in
+   you CakePHP app.
+   
 1. Download the archive from github and extract it in 'plugins/image_select'. Note 
    that if you install it in another directory, then you need to change the code
    in file '<plugin_dir>/views/image_selects/preview.ctp'. Search for the 
@@ -81,6 +84,7 @@ returns all images from the right side.
    controller, model and views. Besides we have the table 'cities' with all 
    necessary things. The idea is that one city could have many photos assigned
    with it.
+   Photos table should have primary key id, 
    
 3. Connect the behaviour. In your file 'app/models/photo.php' add:
         var $actsAs = array(
