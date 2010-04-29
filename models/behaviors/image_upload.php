@@ -29,8 +29,14 @@ class ImageUploadBehavior extends MeioUploadBehavior {
 			'filesize' => 'filesize',
 			'mimetype' => 'mimetype',
             'preview_link' => 'preview_link',
+            'name' => 'name' // human-readable name that could be used to reference this image
 		),
     );
+    /* Note that there are additional thumbnails parameters: maxDimension -> a,
+     * heightPortrait, widthLandscape. If maxDimension is set to 'a' (adjustable),
+     * then the thumbnail is created based on the orientation. heightPortrait and
+     * widthLandscape define maximal size of the sides respectively.
+     */
     
 /**
  * Setup the behavior. It stores a reference to the model, merges the default options with the options for each field, and setup the validation rules.
@@ -124,8 +130,73 @@ class ImageUploadBehavior extends MeioUploadBehavior {
 		// Reset the filesToRemove array
 		$this->__filesToRemove = array();
 	}
- 
 
+/**
+ * Function to create Thumbnail images scaled based on the maximal side
+ *
+ * @author Jose Diaz-Gonzalez, Vadim Frolov
+ * @param String source file name (without path)
+ * @param String target file name (without path)
+ * @param String path to source and destination (no trailing DS)
+ * @param Array
+ * @return void
+ */
+	function _createThumbnail(&$model, $source, $target, $fieldName, $params = array()) {
+		$params = array_merge(
+			array(
+				'thumbWidth' => 150,
+				'thumbHeight' => 225,
+				'maxDimension' => '',
+				'thumbnailQuality' => $this->__fields[$model->alias][$fieldName]['thumbnailQuality'],
+				'zoomCrop' => false,
+                'heightPortrait' => 600,
+                'widthLandscape' => 600,
+			),
+			$params);
+
+		// Import phpThumb class
+		App::import('Vendor','phpthumb', array('file' => 'phpThumb'.DS.'phpthumb.class.php'));
+
+		// Configuring thumbnail settings
+		$phpThumb = new phpthumb;
+		$phpThumb->setSourceFilename($source);
+
+		if ($params['maxDimension'] == 'w') {
+			$phpThumb->w = $params['thumbWidth'];
+		} else if ($params['maxDimension'] == 'h') {
+			$phpThumb->h = $params['thumbHeight'];
+        } else if ($params['maxDimension'] == 'a') // adjustable
+        {
+            $phpThumb->hp = $params['heightPortrait'];
+            $phpThumb->wl = $params['widthLandscape'];
+		} else {
+			$phpThumb->w = $params['thumbWidth'];
+			$phpThumb->h = $params['thumbHeight'];
+		}
+
+		$phpThumb->setParameter('zc', $this->__fields[$model->alias][$fieldName]['zoomCrop']);
+		if (isset($params['zoomCrop'])){
+			$phpThumb->setParameter('zc', $params['zoomCrop']);
+		}
+		$phpThumb->q = $params['thumbnailQuality'];
+
+		$imageArray = explode(".", $source);
+		$phpThumb->config_output_format = $imageArray[1];
+		unset($imageArray);
+
+		$phpThumb->config_prefer_imagemagick = $this->__fields[$model->alias][$fieldName]['useImageMagick'];
+		$phpThumb->config_imagemagick_path = $this->__fields[$model->alias][$fieldName]['imageMagickPath'];
+
+		// Setting whether to die upon error
+		$phpThumb->config_error_die_on_error = true;
+		// Creating thumbnail
+		if ($phpThumb->GenerateThumbnail()) {
+			if (!$phpThumb->RenderToFile($target)) {
+				$this->_addError('Could not render image to: '.$target);
+			}
+		}
+	}
+    
 /**
  * Uploads the files
  *
@@ -156,7 +227,7 @@ class ImageUploadBehavior extends MeioUploadBehavior {
 			}
 			$pos = strrpos($data[$model->alias][$fieldName]['type'], '/');
 			$sub = substr($data[$model->alias][$fieldName]['type'], $pos+1);
-			list(,$ext) = $this->_splitFilenameAndExt($data[$model->alias][$fieldName]['name']);
+			list($filename, $ext) = $this->_splitFilenameAndExt($data[$model->alias][$fieldName]['name']);
 
 			// Put in a subfolder if the user wishes it
 			if (isset($options['folderAsField']) && !empty($options['folderAsField']) && is_string($options['folderAsField'])) {
@@ -166,27 +237,29 @@ class ImageUploadBehavior extends MeioUploadBehavior {
 
 			// Check whether or not the behavior is in useTable mode
 			if ($options['useTable'] == false) {
-                echo "no useTable \n";
-				$this->_includeDefaultReplacement($options['default']);
-				$this->_fixName($model, $fieldName, false);
-				$saveAs = $options['dir'] . DS . $data[$model->alias][$options['uploadName']] . '.' . $sub;
+                $result = false;
+				// $this->_includeDefaultReplacement($options['default']);
+				// $this->_fixName($model, $fieldName, false);
+				// $saveAs = $options['dir'] . DS . $data[$model->alias][$options['uploadName']] . '.' . $sub;
 
-				// Attempt to move uploaded file
-				$copyResults = $this->_copyFileFromTemp($data[$model->alias][$fieldName]['tmp_name'], $saveAs);
-				if ($copyResults !== true) {
-					$result = array('return' => false, 'reason' => 'validation', 'extra' => array('field' => $field, 'error' => $copyResults));
-					continue;
-				}
+				// // Attempt to move uploaded file
+				// $copyResults = $this->_copyFileFromTemp($data[$model->alias][$fieldName]['tmp_name'], $saveAs);
+				// if ($copyResults !== true) {
+					// $result = array('return' => false, 'reason' => 'validation', 'extra' => array('field' => $field, 'error' => $copyResults));
+					// continue;
+				// }
 
-				// If the file is an image, try to make the thumbnails
-				if ((count($options['thumbsizes']) > 0) && count($options['allowedExt']) > 0 && in_array($data[$model->alias][$fieldName]['type'], $this->_imageTypes)) {
-					$this->_createThumbnails($model, $data, $fieldName, $saveAs, $ext, $options);
-				}
+				// // If the file is an image, try to make the thumbnails
+				// if ((count($options['thumbsizes']) > 0) && count($options['allowedExt']) > 0 && in_array($data[$model->alias][$fieldName]['type'], $this->_imageTypes)) {
+					// $this->_createThumbnails($model, $data, $fieldName, $saveAs, $ext, $options);
+				// }
 
-				$data = $this->_unsetDataFields($model->alias, $fieldName, $model->data, $options);
-				$result = array('return' => true, 'data' => $data);
+				// $data = $this->_unsetDataFields($model->alias, $fieldName, $model->data, $options);
+				// $result = array('return' => true, 'data' => $data);
 				continue;
-			} else {
+			} 
+            else 
+            {
 				// if the file is marked to be deleted, use the default or set the field to null
 				if (!empty($data[$model->alias][$fieldName]['remove'])) {
 					if ($options['default']) {
@@ -227,16 +300,30 @@ class ImageUploadBehavior extends MeioUploadBehavior {
                 }
                 $this->__fields[$model->alias][$fieldName]['dir'] = $dir;
                 
+                // Fix the filename, removing bad characters and avoiding from overwriting existing ones
+                if ($options['default'] == true) 
+                {
+                    $this->_includeDefaultReplacement($options['default']);
+                }
+                
+                if (!isset($data[$model->alias]['UserName']) || strlen($data[$model->alias]['UserName']) == 0)
+                {
+                    $data[$model->alias]['UserName'] = $data[$model->alias][$fieldName]['name'];
+                }
+                else
+                {
+                    // add extension so we get no error from Meio
+                    $data[$model->alias]['UserName'] = $data[$model->alias]['UserName'] . '.png';
+                }
+                $this->_fixUserName($model, 'UserName');
+                
                 // generate file name or use user supplied
-                if ($options['generateName'] == true) {
-               		list ($filename, $ext) = $this->_splitFilenameAndExt($data[$model->alias][$fieldName]['name']);
+                if ($options['generateName'] == true) 
+                {
                     $new_filename = md5(uniqid(rand(), true));
                     $data[$model->alias][$fieldName]['name'] = $new_filename . '.' . $ext;
-                } else {
-                    // Fix the filename, removing bad characters and avoiding from overwriting existing ones
-                    if ($options['default'] == true) {
-                        $this->_includeDefaultReplacement($options['default']);
-                    }
+                } else 
+                {
                     $this->_fixName($model, $fieldName);
                 }
                 
@@ -255,14 +342,27 @@ class ImageUploadBehavior extends MeioUploadBehavior {
 				}
 
 				// If the file is an image, try to make the thumbnails
-				if ((count($options['thumbsizes']) > 0) && count($options['allowedExt']) > 0 && in_array($data[$model->alias][$fieldName]['type'], $this->_imageTypes)) {
+				if ((count($options['thumbsizes']) > 0) && count($options['allowedExt']) > 0 && in_array($data[$model->alias][$fieldName]['type'], $this->_imageTypes)) 
+                {
 					$this->_createThumbnails($model, $data, $fieldName, $saveAs, $ext, $options);
+                    foreach ($options['thumbsizes'] as $key => $value) 
+                    {
+                        // Generate the name for the thumbnail
+                        if (isset($options['uploadName']) && !empty($options['uploadName'])) {
+                            $preview_link = $this->_getThumbnailName($saveAs, $options['dir'], $key, $data[$model->alias][$options['uploadName']], $ext);
+                        } else {
+                            $preview_link = $this->_getThumbnailName($saveAs, $options['dir'], $key, $data[$model->alias][$fieldName]['name']);
+                        }
+                        break;
+                    }
 				}
 
 				// Update model data
 				$data[$model->alias][$options['fields']['dir']] = $dir;
 				$data[$model->alias][$options['fields']['mimetype']] = $data[$model->alias][$fieldName]['type'];
 				$data[$model->alias][$options['fields']['filesize']] = $data[$model->alias][$fieldName]['size'];
+                $data[$model->alias][$options['fields']['preview_link']] = $preview_link;
+                $data[$model->alias][$options['fields']['name']] = $data[$model->alias]['UserName'];
 				if (isset($options['uploadName']) && !empty($options['uploadName'])) {
 					$data[$model->alias][$fieldName] = $data[$model->alias][$options['uploadName']].'.'.$ext;
 				} else {
@@ -278,6 +378,43 @@ class ImageUploadBehavior extends MeioUploadBehavior {
 		} else {
 			return true;
 		}
+	}
+
+/**
+ * We have a field in the database with name Name. This function removes bad 
+ * characters and replaces reserved words from this field. It updates the
+ * $model->data.
+ *
+ * @param $fieldName String
+ * @return void
+ * @author Vadim Frolov
+ */
+	function _fixUserName(&$model, $fieldName, $checkName = true) 
+    {
+		// updates the filename removing the keywords thumb and default name for the field.
+		list ($filename, $ext) = $this->_splitFilenameAndExt($model->data[$model->alias][$fieldName]);
+		$filename = str_replace($this->patterns, $this->replacements, $filename);
+		$filename = Inflector::slug($filename);
+		$i = 0;
+		$newFilename = $filename;
+		if ($checkName) 
+        {
+            while (1)
+            {
+                $res = $model->FindByName($newFilename);
+                if (isset($res[$model->alias]) > 0)
+                {
+                    $newFilename = $filename . '-' . $i++;
+                    pr($newFilename);
+                }
+                else
+                {
+                    break;
+                }
+                unset($res);
+            }
+		}
+		$model->data[$model->alias][$fieldName] = $newFilename;
 	}
 
 /**
@@ -375,4 +512,5 @@ class ImageUploadBehavior extends MeioUploadBehavior {
         return $return_dir;
     }
 }
+
 ?>

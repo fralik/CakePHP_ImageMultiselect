@@ -40,7 +40,6 @@ function deselect(objects)
     for (i=0; i < objects.length; i++)
     {
         div = objects[i];
-        div.setAttribute('selected', '');
         toggle_img(div);
     }
 }
@@ -138,13 +137,13 @@ if (count($allphotos)>0 || count($allselected) > 0) {
     foreach ($allphotos as $photo) 
     { 
         $id = $photo[$modelClass]['id'];
-        // Weak place here (TODO): replace with preview_url contained in the DB!
-        $img_path = $photo[$modelClass]['dir'] . '/thumb/my320/' . $photo[$modelClass]['filename'];
+        $name = $photo[$modelClass]['name'];
+        $img_path = $photo[$modelClass]['preview_link'];
         $img_path = str_replace("\\", "/", $img_path);
         $img_path = $absolute_url . $img_path;
 ?> 
         <div class="imgselect_float" selected="" id="<?php echo $id;?>">
-        <?php echo $html->image($img_path, array('title' => $id)); unset($img_path); ?><br />
+        <?php echo $html->image($img_path, array('title' => $name, 'alt' => $name)); unset($img_path); ?><br />
         <p><input type="checkbox" value="<?php echo $id;?>" /></p></div>
 <?php
     }
@@ -164,13 +163,13 @@ if (count($allphotos)>0 || count($allselected) > 0) {
     foreach ($allselected as $photo)
     {
         $id = $photo[$modelClass]['id'];
-        // Weak place here (TODO): replace with preview_url contained in the DB!
-        $img_path = $photo[$modelClass]['dir'] . '/thumb/my320/' . $photo[$modelClass]['filename'];
+        $name = $photo[$modelClass]['name'];
+        $img_path = $photo[$modelClass]['preview_link'];
         $img_path = str_replace("\\", "/", $img_path);
         $img_path = $absolute_url . $img_path;
 ?> 
         <div class="imgselect_float" selected="" id="<?php echo $id;?>">
-        <?php echo $html->image($img_path, array('title' => $id)); unset($img_path); ?><br />
+        <?php echo $html->image($img_path, array('title' => $name, 'alt' => $name)); unset($img_path); ?><br />
         <p><input type="checkbox" id="selected[]" name="selected[]" value="<?php echo $id;?>" /></p></div>
 <?php
     }

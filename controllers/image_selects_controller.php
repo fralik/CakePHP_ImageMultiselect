@@ -29,15 +29,19 @@ class ImageSelectsController extends AppController
     /*
      * Can be used through AJAX call to add the main functionality
      */
-    function preview()
+    function preview($data = null)
     {
+        if ($data)
+            $type = $data;
+            
         $this->model_instance->recursive = 0;
         
         // get the id of selected items:
         if (!empty($this->params['form']['selected']))
         {
             $selected = $this->params['form']['selected'];
-            $selected_ids = array('id' => $selected);
+            $id_str = $this->model_instance->alias . '.id';
+            $selected_ids = array($id_str => $selected);
             $conditions = array("NOT" => $selected_ids);
             $this->set('allselected', $this->model_instance->find('all', array('conditions' => $selected_ids)));
         }
